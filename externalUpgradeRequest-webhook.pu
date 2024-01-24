@@ -1,0 +1,18 @@
+@startuml
+start
+:Inplace upgrade extension webhook;
+:ExternalUpgradeRequest get called;
+if (Is there ongoing UpgradeTask for 
+same MachineDeployment/CP exists) then (yes)
+    :Abort ongoing UpgradeTask;
+else (no)
+endif
+if (Verify request and determine if
+extension able to handle changes?) then (yes)
+  :Create UpgradeTask CR;
+  :Respond **Accept**;
+else (no)
+  :Respond **Decline**;
+endif
+stop
+@enduml

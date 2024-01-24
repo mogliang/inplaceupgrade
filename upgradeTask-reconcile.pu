@@ -4,27 +4,28 @@ start
 
 :UpgradeTask controller;
 :UpgradeTask controller enquenes a Reconcile call;
-:Get Machines for given MachineDeployment/KCP;
+:Get Machines for given MachineDeployment/CP;
 
 if (UpgradeTask stage ongoing) then (yes)
   repeat :iterate Machines
     if (Is Machine owned by any UpgradeTask?) then (no)
-        :Add UpgradeInProgress condition with reason 'waiting';
+        :Add MachineUpToDate condition with reason 'waiting';
         :Add UpgradeTask owner;
     else (yes)
     endif
   repeat while (more Machines?)
-  if (Query owned Machines, find machine which its \nUpgradeInProgress condition reason is \n'ExternalUpgradeInProgress') then (found)
-    :**Doing** inplace upgrade;
+  if (Query owned Machines, find machine which its \nMachineUpToDate condition reason is \n'ExternalUpgradeInProgress') then (found)
+    #lightGreen:**Doing** inplace upgrade;
     if (Upgrade succeed?) then (yes)
-      :Mark UpgradeInProgress condition 'Ready';
+      :Update Machine Spec;
+      :Mark MachineUpToDate condition 'Ready';
     else if (Upgrade failed or timeout?) then (yes)
-      :Update UpgradeInProgress condition \nreason to 'Failed';
+      :Update MachineUpToDate condition \nreason to 'Failed';
     else (no)
     endif
   else (no)
     if (Select 1 owned Machine to be upgraded \nbased on preflight check) then (selected)
-      :Update UpgradeInProgress condition \nreason to 'ExternalUpgradeInProgress';
+      :Update MachineUpToDate condition \nreason to 'ExternalUpgradeInProgress';
     else (no)
       if (All Machine upgraded?) then (yes)
         :Mark UpgradeTask status to ready;
@@ -38,10 +39,10 @@ else if (UpgradeTask stage aborted) then (yes)
   repeat :iterate Machines
     if (Check if machine is owned by current UpgradeTask?) then (yes)
         if (Check if machine is doing inplace upgrade?) then (yes)
-          :**Abort** inplace upgrade;
+          #lightGreen:**Abort** inplace upgrade;
         else (no)
         endif
-        :Remove UpgradeInProgress condition;
+        :Remove MachineUpToDate condition;
         :Remove UpgradeTask owner;
     else (no)
     endif
