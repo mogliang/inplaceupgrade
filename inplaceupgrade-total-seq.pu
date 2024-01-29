@@ -1,0 +1,19 @@
+@startuml
+actor User as user
+participant "CAPI" as capi
+participant "cluster In-place upgrader" as cup
+participant "node In-place upgrader" as nup
+participant host
+
+user -> capi: upgrade cluster os/k8s version
+capi -> cup: delegate upgrade to
+cup --> capi: accept
+loop while nodesToUpdate > 0
+    cup -> capi: preflight check \nand select 1 node to update
+    cup -> nup: update node
+    nup -> host: in-place upgrade node
+    host --> nup
+    nup --> cup 
+end
+cup -> capi: upgrade completed
+@enduml
